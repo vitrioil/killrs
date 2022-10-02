@@ -1,26 +1,32 @@
-use std::fs;
+use std::{fs, process::Command};
 
-pub fn read_smap(pid: i32) {
+fn get_memory_value(line: &str) -> i32 {
+    if !line.contains(':') {
+        0
+    } else {
+        // TODO: simplify this, converts (Private: 10 kb) -> (10)
+        line.split_once(':').unwrap().1.trim().split_once(' ').unwrap().0.parse::<i32>().unwrap()
+    }
+}
+
+pub fn read_system_memory_percentage() -> i32 {
+    match String::from_utf8(Command::new("sh")
+                     .arg("-c")
+                     .arg("free | grep Mem | awk '{print int( $3/$2 * 100.0 ) }'")
+                     .output().expect("Failed to execute kill").stdout) {
+        Ok(output) => output.replace('\n', "").parse::<i32>().unwrap(),
+        Err(_) => 0
+    }
+}
+
+pub fn read_private_memory(pid: i32) -> i32 {
     let data = fs::read_to_string(format!("/proc/{pid}/smaps_rollup"))
                     .expect("{pid} process id does not exist!");
-    // let (mut private_huge, mut shared_huge, mut shared, mut private, mut pss): (&str, &str, &str, &str, &str);
-    for line in data.split("\n") {
-       // if line.starts_with("Private_Hugetlb") {
-       //     (_, private_huge) = line.split_once(":").unwrap();
-       // }
-       // else if line.starts_with("Shared_Hugetlb") {
-       //     (_, shared_huge) = line.split_once(":").unwrap();
-       // }
-       // else if line.starts_with("Shared") {
-       //     (_, shared) = line.split_once(":").unwrap();
-       // }
-       // else if line.starts_with("Private") {
-       //     (_, private) = line.split_once(":").unwrap();
-       // }
-       // else if line.starts_with("Pss") {
-       //     (_, pss) = line.split_once(":").unwrap();
-       // }
-       println!("{}", line);
+    let mut private = 0;
+    for line in data.split('\n') {
+        if line.starts_with("Private") {
+            private += get_memory_value(line);
+        }
     }
-    //println!("{} {} {} {} {}", private_huge, shared_huge, shared, private, pss)
+    private
 }
