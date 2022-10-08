@@ -1,35 +1,39 @@
 use clap::Parser;
 
-mod mem;
+use crate::resource::ResourceOptions;
+
+mod resource;
 mod monitor;
 
-/// Simple script to monitor ps memory
+/// Stake process if a resource crosses a threshold.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the process
-    /// #[arg(short, long)]
-    /// name: String,
 
-    /// Process ID
-    #[arg(short, long, default_value_t = 1)]
+    /// Process ID to stake.
+    #[arg(short, long)]
     pid: i32,
 
-    /// Aggression level
+    /// Aggression level to end the process.
     #[arg(short, long, default_value_t = 0)]
     aggression: i32,
 
-    /// System memory threshold (in %)
-    #[arg(short, long, default_value_t = 70)]
-    system_threshold: i32,
+    /// System property to monitor.
+    #[arg(value_enum)]
+    resource: ResourceOptions,
 
-    /// Process memory threshold (in kB)
-    #[arg(short = 't', long, default_value_t = 2000)]
-    process_threshold: i32,
+    /// To stake a process above or below a threshold.
+    #[arg(short, long, default_value_t = false)]
+    lower_threshold: bool,
+
+    /// Threshold
+    #[arg(short, long)]
+    threshold: i32,
 }
 
 fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
-    monitor::monitor(args.pid, args.aggression, args.system_threshold, args.process_threshold);
+    let more = if args.lower_threshold { -1 } else { 1 };
+    monitor::monitor(args.pid, args.aggression, args.resource, more, args.threshold);
 }
