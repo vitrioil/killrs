@@ -1,9 +1,6 @@
 use clap::Parser;
 
-use crate::resource::ResourceOptions;
-
-mod resource;
-mod monitor;
+use killrs::{resource, monitor};
 
 /// Stake process if a resource crosses a threshold.
 #[derive(Parser, Debug)]
@@ -20,7 +17,7 @@ struct Args {
 
     /// System property to monitor.
     #[arg(value_enum)]
-    resource: ResourceOptions,
+    resource: resource::ResourceOptions,
 
     /// To stake a process above or below a threshold.
     #[arg(short, long, default_value_t = false)]

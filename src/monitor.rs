@@ -62,6 +62,7 @@ mod tests {
 
     #[test]
     fn test_should_kill() {
+        // create dependency
         let mut invalid_resource = resource::Resource::new(-1);
 
         assert!(should_kill(&resource::ResourceOptions::SysMem, 1, 0, &mut invalid_resource));
