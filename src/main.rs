@@ -34,6 +34,7 @@ struct Args {
 fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
-    let more = if args.lower_threshold { -1 } else { 1 };
-    monitor::monitor(args.pid, args.aggression, args.resource, more, args.threshold);
+    let invert = if args.lower_threshold { -1 } else { 1 };
+    let mut resource = resource::Resource::new(args.pid);
+    monitor::monitor(&mut resource, args.aggression, args.resource, invert, args.threshold);
 }

@@ -12,33 +12,59 @@ fn escalate_level(level: &mut i32, tries: &mut i32, timeout: &mut u64) {
 
 fn should_kill(
     res_option: &resource::ResourceOptions,
-    more: i32,
+    invert: i32,
     threshold: i32,
     resource: &mut resource::Resource,
 ) -> bool {
     match res_option {
-        resource::ResourceOptions::ProcMem => more * ((*resource).proc_memory() - threshold) > 0,
-        resource::ResourceOptions::SysMem  => more * ((*resource).sys_mem_percentage() - threshold) > 0,
-        resource::ResourceOptions::CpuUtil => more * ((*resource).cpu_util() - threshold) > 0,
-        resource::ResourceOptions::CpuTemp => more * ((*resource).cpu_temp() - threshold) > 0,
+        resource::ResourceOptions::ProcMem => invert * ((*resource).proc_memory() - threshold) > 0,
+        resource::ResourceOptions::SysMem  => invert * ((*resource).sys_mem_percentage() - threshold) > 0,
+        resource::ResourceOptions::CpuUtil => invert * ((*resource).cpu_util() - threshold) > 0,
+        resource::ResourceOptions::CpuTemp => invert * ((*resource).cpu_temp() - threshold) > 0,
+        resource::ResourceOptions::RunTime => invert * ((*resource).run_time() - threshold) > 0,
     }
 }
 
-pub fn monitor(pid: i32, level: i32, res_option: resource::ResourceOptions, more: i32, threshold: i32) {
-    info!("Started monitoring PID {} for {}", pid, res_option);
+pub fn monitor(resource: &mut resource::Resource, level: i32, res_option: resource::ResourceOptions, invert: i32, threshold: i32) {
+    info!("Started monitoring PID {} for {}", resource.pid(), res_option);
     let mut tries = 0;
     let mut current_level = level;
     let mut timeout: u64 = 1;
-    let mut resource = resource::Resource::new(pid);
     while resource.pid_exists() {
         
-        if should_kill(&res_option, more, threshold, &mut resource) {
+        if should_kill(&res_option, invert, threshold, resource) {
             resource.maybe_kill(current_level);
             escalate_level(&mut current_level, &mut tries, &mut timeout);
         }
 
         std::thread::sleep(std::time::Duration::from_secs(timeout))
     }
-    info!("Ending monitoring PID {}", pid);
-    info!("PID {} not alive", pid);
+    info!("Ending monitoring PID {}", resource.pid());
+    info!("PID {} not alive", resource.pid());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_escalation() {
+        let (mut level, mut tries, mut timeout) = (0, 0, 1);
+
+        // increase tries, but no change to level and timeout just yet
+        escalate_level(&mut level, &mut tries, &mut timeout);
+        assert_eq!((level, tries, timeout), (0, 1, 1));
+
+        // increase all
+        escalate_level(&mut level, &mut tries, &mut timeout);
+        assert_eq!((level, tries, timeout), (1, 2, 2));
+    }
+
+    #[test]
+    fn test_should_kill() {
+        let mut invalid_resource = resource::Resource::new(-1);
+
+        assert!(should_kill(&resource::ResourceOptions::SysMem, 1, 0, &mut invalid_resource));
+        assert!(!should_kill(&resource::ResourceOptions::SysMem, 1, 1000, &mut invalid_resource));
+    }
 }
