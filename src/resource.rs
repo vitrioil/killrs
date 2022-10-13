@@ -92,6 +92,18 @@ impl Resource {
         self.system.process(self.pid).is_some()
     }
 
+    fn _maybe_wait(&mut self, signal: sysinfo::Signal) {
+        if signal == sysinfo::Signal::Kill {
+            info!("Waiting for pid {}", self.pid);
+            unsafe {
+                // necessary to wait to ensure process died :)
+                let mut status = 0 as libc::c_int;
+                libc::waitpid(self.pid.as_u32() as i32, &mut status, 0);
+            }
+            info!("Wait complete for pid {}", self.pid);
+        }
+    }
+
     pub fn maybe_kill(&mut self, level: i32) -> bool {
         let signal = if level == 0 {
             sysinfo::Signal::Interrupt
@@ -106,6 +118,7 @@ impl Resource {
                 info!("Attempting to send signal {} to PID {}", signal, self.pid);
                 if p.kill_with(signal).is_some() {
                     info!("Signal: {} sent to PID: {}", signal, self.pid);
+                    self._maybe_wait(signal);
                     true
                 } else {
                     warn!("Problem sending signal {}", signal);
