@@ -30,14 +30,17 @@ pub fn monitor(resource: &mut resource::Resource, level: i32, res_option: resour
     let mut tries = 0;
     let mut current_level = level;
     let mut timeout: u64 = 1;
-    while resource.pid_exists() {
-        
+    // send sigkill only once
+    while resource.pid_exists() && current_level <= 2 {
+ 
         if should_kill(&res_option, invert, threshold, resource) {
             resource.maybe_kill(current_level);
+            // don't sleep if process died or sigkill is sent
+            if resource.pid_exists() && current_level < 2 {
+                std::thread::sleep(std::time::Duration::from_secs(timeout));
+            }
             escalate_level(&mut current_level, &mut tries, &mut timeout);
         }
-
-        std::thread::sleep(std::time::Duration::from_secs(timeout))
     }
     info!("Ending monitoring PID {}", resource.pid());
     info!("PID {} not alive", resource.pid());

@@ -87,7 +87,8 @@ impl Resource {
     }
 
     pub fn pid_exists(&mut self) -> bool {
-        self.system.refresh_process(self.pid);
+        // TODO: Figure out why refresh_process does not work sometime.
+        self.system.refresh_all();
         self.system.process(self.pid).is_some()
     }
 
@@ -99,7 +100,7 @@ impl Resource {
         } else {
             sysinfo::Signal::Kill
         };
-        self.system.refresh_process(self.pid);
+        self.system.refresh_all();
         match self.system.process(self.pid) {
             Some(p) => {
                 info!("Attempting to send signal {} to PID {}", signal, self.pid);
