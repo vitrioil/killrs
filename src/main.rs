@@ -12,7 +12,7 @@ struct Args {
     pid: i32,
 
     /// Aggression level to end the process.
-    #[arg(short, long, default_value_t = resource::Aggression::Interrupt)]
+    #[arg(short, long, default_value = "interrupt")]
     aggression: resource::Aggression,
 
     /// System property to monitor.
