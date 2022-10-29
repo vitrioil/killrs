@@ -1,29 +1,29 @@
 use clap::Parser;
+use tracing::info;
 
-use killrs::{resource, monitor};
+use killrs::resource;
 
-/// Stake process if a resource crosses a threshold.
+/// Kill process if a system resource crosses threshold.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-
-    /// Process ID to stake.
+    /// Process ID to kill.
     #[arg(short, long)]
     pid: i32,
 
     /// Aggression level to end the process.
-    #[arg(short, long, default_value_t = 0)]
-    aggression: i32,
+    #[arg(short, long, default_value_t = resource::Aggression::Interrupt)]
+    aggression: resource::Aggression,
 
     /// System property to monitor.
     #[arg(value_enum)]
     resource: resource::ResourceOptions,
 
-    /// To stake a process above or below a threshold.
+    /// Decide if threshold crossed above or below should kill a process.
     #[arg(short, long, default_value_t = false)]
     lower_threshold: bool,
 
-    /// Threshold
+    /// Threshold.
     #[arg(short, long)]
     threshold: i32,
 }
@@ -32,6 +32,15 @@ fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
     let invert = if args.lower_threshold { -1 } else { 1 };
-    let mut resource = resource::Resource::new(args.pid);
-    monitor::monitor(&mut resource, args.aggression, args.resource, invert, args.threshold);
+    let mut resource = resource::Resource::new(
+        args.pid,
+        args.aggression,
+        args.resource,
+        invert,
+        args.threshold,
+    );
+    info!("Started monitoring PID {} for ", resource.pid());
+    resource.killrs();
+    info!("Ending monitoring PID {}", resource.pid());
+    info!("PID {} not alive", resource.pid());
 }
