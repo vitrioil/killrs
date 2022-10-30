@@ -42,15 +42,15 @@ impl Aggression {
 /// Resource options to monitor
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum ResourceOptions {
-    /// Process Memory
+    /// Process Memory (in MBs)
     ProcMem,
-    /// System Memory
+    /// System Memory (%)
     SysMem,
-    /// CPU Utilisation
+    /// CPU Utilisation (%)
     CpuUtil,
-    /// CPU Temperature
+    /// CPU Temperature (C)
     CpuTemp,
-    /// Process Run Time
+    /// Process Run Time (in seconds)
     RunTime,
 }
 
