@@ -88,7 +88,7 @@ impl Resource {
     }
 
     fn proc_memory(&mut self) -> i32 {
-        self.system.refresh_all();
+        self.system.refresh_process(self.pid);
         let process = self
             .system
             .process(self.pid)
@@ -160,7 +160,7 @@ impl Resource {
 
     /// PID existence check
     pub fn pid_exists(&mut self) -> bool {
-        self.system.refresh_all();
+        self.system.refresh_processes();
         self.system.process(self.pid).is_some()
     }
 
@@ -178,7 +178,7 @@ impl Resource {
 
     fn maybe_kill(&mut self) -> bool {
         let signal = self.aggression.get_signal();
-        self.system.refresh_all();
+        self.system.refresh_process(self.pid);
         match self.system.process(self.pid) {
             Some(p) => {
                 info!("Attempting to send signal {} to PID {}", signal, self.pid);
@@ -228,12 +228,11 @@ mod tests {
             10,
         );
 
-        assert!(resource.pid_exists());
         assert!(resource.run_time() < 1);
+        assert!(resource.pid_exists());
         std::thread::sleep(std::time::Duration::from_millis(2000));
         assert!(resource.run_time() > 1);
 
-        assert!(resource.proc_memory() != 0);
         assert!(resource.sys_mem_percentage() != 0);
         assert!(resource.cpu_util() != 0);
         assert!(resource.cpu_temp() != 0);
