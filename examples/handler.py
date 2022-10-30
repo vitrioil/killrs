@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # To simulate handling of SIGTERM
 import os
 import signal

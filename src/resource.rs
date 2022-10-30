@@ -89,7 +89,10 @@ impl Resource {
 
     fn proc_memory(&mut self) -> i32 {
         self.system.refresh_all();
-        let process = self.system.process(self.pid).expect("Process not found while reading memory");
+        let process = self
+            .system
+            .process(self.pid)
+            .expect("Process not found while reading memory");
         (process.memory() as f32 / 1_000_000.0) as i32
     }
 
