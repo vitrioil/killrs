@@ -43,7 +43,7 @@ fn main() {
         invert,
         args.threshold,
     );
-    info!("Started monitoring PID {} for ", resource.pid());
+    info!("Started monitoring PID {}", resource.pid());
     resource.killrs();
     info!("Ending monitoring PID {}", resource.pid());
     info!("PID {} not alive", resource.pid());

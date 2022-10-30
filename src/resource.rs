@@ -1,4 +1,4 @@
-use std::{fmt, fs};
+use std::fmt;
 use sysinfo::{ComponentExt, CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 use tracing::{info, warn};
 
@@ -87,33 +87,10 @@ impl Resource {
         }
     }
 
-    fn _parse_private_memory(&mut self, line: &str) -> i32 {
-        if !line.contains(':') {
-            0
-        } else {
-            // TODO: simplify this, converts (Private: 10 kb) -> (10)
-            line.split_once(':')
-                .unwrap()
-                .1
-                .trim()
-                .split_once(' ')
-                .unwrap()
-                .0
-                .parse::<i32>()
-                .unwrap()
-        }
-    }
-
     fn proc_memory(&mut self) -> i32 {
-        let data = fs::read_to_string(format!("/proc/{0}/smaps_rollup", self.pid))
-            .expect("Error while reading private memory");
-        let mut private = 0;
-        for line in data.split('\n') {
-            if line.starts_with("Private") {
-                private += self._parse_private_memory(line);
-            }
-        }
-        private
+        self.system.refresh_all();
+        let process = self.system.process(self.pid).expect("Process not found while reading memory");
+        (process.memory() as f32 / 1_000_000.0) as i32
     }
 
     fn sys_mem_percentage(&mut self) -> i32 {
@@ -166,7 +143,7 @@ impl Resource {
     pub fn killrs(&mut self) {
         let mut wait = true;
         let timeout: u64 = 1;
-        let mut signal_sent = false;
+        let mut signal_sent = true;
         while wait {
             if self._should_kill() {
                 signal_sent = self.maybe_kill();
@@ -263,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error while reading private memory")]
+    #[should_panic(expected = "Process not found while reading memory")]
     fn test_invalid_resource_proc_memory() {
         let mut resource = Resource::new(-1, Aggression::Kill, ResourceOptions::RunTime, 1, 10);
 
