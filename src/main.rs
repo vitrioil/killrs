@@ -3,27 +3,31 @@ use tracing::info;
 
 use killrs::resource;
 
-/// Kill process if a system resource crosses threshold.
+/// Kill process if a system resource crosses threshold
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Process ID to kill.
+    /// Process ID to kill
     #[arg(short, long)]
     pid: i32,
 
-    /// Aggression level to end the process.
+    /// Aggression level to end the process
+    ///
+    /// Level escalates after a signal is sent
     #[arg(short, long, default_value = "interrupt")]
     aggression: resource::Aggression,
 
-    /// System property to monitor.
+    /// System property to monitor
     #[arg(value_enum)]
     resource: resource::ResourceOptions,
 
-    /// Decide if threshold crossed above or below should kill a process.
+    /// Decide if threshold crossed above or below should kill a process
+    ///
+    /// By default, process is killed if resource value is more than threshold
     #[arg(short, long, default_value_t = false)]
     lower_threshold: bool,
 
-    /// Threshold.
+    /// Resource threshold
     #[arg(short, long)]
     threshold: i32,
 }

@@ -2,10 +2,14 @@ use std::{fmt, fs};
 use sysinfo::{ComponentExt, CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 use tracing::{info, warn};
 
+/// Aggression defines what signal is received by the process
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum Aggression {
+    /// SIGINT
     Interrupt,
+    /// SIGTERM
     Terminate,
+    /// SIGKILL
     Kill,
 }
 
@@ -16,6 +20,7 @@ impl fmt::Display for Aggression {
 }
 
 impl Aggression {
+    /// Escalate the signal from leaner to aggressive value
     fn escalate(&self) -> Self {
         match *self {
             Aggression::Interrupt => Aggression::Terminate,
@@ -24,6 +29,7 @@ impl Aggression {
         }
     }
 
+    /// Converts into sysinfo signal
     fn get_signal(&self) -> sysinfo::Signal {
         match *self {
             Aggression::Interrupt => sysinfo::Signal::Interrupt,
@@ -33,12 +39,18 @@ impl Aggression {
     }
 }
 
+/// Resource options to monitor
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum ResourceOptions {
+    /// Process Memory
     ProcMem,
+    /// System Memory
     SysMem,
+    /// CPU Utilisation
     CpuUtil,
+    /// CPU Temperature
     CpuTemp,
+    /// Process Run Time
     RunTime,
 }
 
@@ -149,6 +161,8 @@ impl Resource {
         }
     }
 
+    /// Kill pid based on resource option and threshold
+    /// Method will run until the process dies
     pub fn killrs(&mut self) {
         let mut wait = true;
         let timeout: u64 = 1;
@@ -164,6 +178,7 @@ impl Resource {
         }
     }
 
+    /// PID existence check
     pub fn pid_exists(&mut self) -> bool {
         self.system.refresh_all();
         self.system.process(self.pid).is_some()
@@ -243,6 +258,7 @@ mod tests {
         assert!(resource.cpu_util() != 0);
         assert!(resource.cpu_temp() != 0);
 
+        // cleanup
         resource.maybe_kill();
     }
 
@@ -265,6 +281,9 @@ mod tests {
         assert!(resource.sys_mem_percentage() != 0);
         assert!(resource.cpu_util() != 0);
         assert!(resource.cpu_temp() != 0);
+
+        // cleanup
+        resource.maybe_kill();
     }
 
     #[test]
@@ -286,6 +305,9 @@ mod tests {
             Resource::new(-1, Aggression::Interrupt, ResourceOptions::RunTime, 1, 10);
         assert!(!invalid_resource.maybe_kill());
         assert!(!invalid_resource.pid_exists());
+
+        // cleanup
+        resource.maybe_kill();
     }
 
     #[test]
