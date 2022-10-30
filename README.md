@@ -27,4 +27,4 @@ cargo run --example simple
 ```
 
 ### About
-It uses sysinfo to gather system information.
+It uses [sysinfo](https://github.com/GuillaumeGomez/sysinfo) to gather system information.
