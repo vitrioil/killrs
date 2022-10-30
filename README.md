@@ -21,5 +21,10 @@ killrs --pid <pid> --threshold 100 run-time
 
 It will send SIGINT to begin with, but if the process still exists it will escalate it to SIGTERM and then SIGKILL.
 
+Run example:
+```bash
+cargo run --example simple
+```
+
 ### About
 It uses sysinfo to gather system information.
