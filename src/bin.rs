@@ -2,7 +2,6 @@ use clap::Parser;
 use tracing::info;
 
 use killrs::resource;
-use killrs::tui;
 
 /// Kill process if a system resource crosses threshold
 #[derive(Parser, Debug)]
@@ -48,7 +47,7 @@ fn main() {
     let args = Args::parse();
     match &args.mode  {
         Some(Mode::TUI) => {
-            let _ = tui::killrs_tui();
+            //let _ = tui::killrs_tui();
         }
         Some(Mode::CLI { lower_threshold, pid, aggression, resource, threshold }) => {
             let invert = if *lower_threshold { -1 } else { 1 };
