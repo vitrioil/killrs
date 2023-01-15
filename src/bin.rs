@@ -7,6 +7,15 @@ use killrs::resource;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// TUI mode
+    #[command(subcommand)]
+    mode: Option<Mode>,
+
+}
+
+#[derive(clap::Subcommand, Debug)]
+enum Mode {
+    TUI, CLI {
     /// Process ID to kill
     #[arg(short, long)]
     pid: i32,
@@ -30,21 +39,37 @@ struct Args {
     /// Resource threshold
     #[arg(short, long)]
     threshold: i32,
+    }
 }
 
 fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
-    let invert = if args.lower_threshold { -1 } else { 1 };
-    let mut resource = resource::Resource::new(
-        args.pid,
-        args.aggression,
-        args.resource,
-        invert,
-        args.threshold,
-    );
-    info!("Started monitoring PID {}", resource.pid());
-    resource.killrs();
-    info!("Ending monitoring PID {}", resource.pid());
-    info!("PID {} not alive", resource.pid());
+    match &args.mode  {
+        Some(Mode::TUI) => {
+            //let _ = tui::killrs_tui();
+        }
+        Some(Mode::CLI { lower_threshold, pid, aggression, resource, threshold }) => {
+            let invert = if *lower_threshold { -1 } else { 1 };
+            let mut resource = resource::Resource::new(
+                *pid,
+                resource::Aggression::Kill,
+                resource::ResourceOptions::SysMem,
+                invert,
+                *threshold,
+            );
+            resource.killrs();
+        }
+        None => {
+            panic!("");
+        }
+    }
+    // info!("Started monitoring PID {}", resource.pid());
+    // if false {
+    //     let _ = tui::killrs_tui(&mut resource);
+    // } else {
+    //     resource.killrs();
+    // }
+    // info!("Ending monitoring PID {}", resource.pid());
+    // info!("PID {} not alive", resource.pid());
 }
